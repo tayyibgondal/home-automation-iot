@@ -1,6 +1,4 @@
-// include the library code:
-#include <LiquidCrystal.h>
-#include <DHT.h>
+#include <LiquidCrystal_I2C.h>
 
 // Wi-Fi credentials
 String ssid     = "Simulator Wifi";  // SSID to connect to
@@ -17,25 +15,11 @@ String apiKey   = "YS1VTTDPFVKTT0G0";  // Replace with your ThingSpeak Write API
 // field2 = Light Level (LDR)
 // field3 = Gas Sensor Value
 // field4 = Motion (PIR)
+// field5 = Temperature (°C)
 String baseUrl  = "/update?api_key=" + apiKey;
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
-
-// Pin where the DHT sensor is connected
-#define DHTPIN A2
-
-// DHT11 sensor type
-#define DHTTYPE DHT11
-
-DHT dht(DHTPIN, DHTTYPE);
-float temperature = 0.0;
-float humidity = 0.0;
-
-// Previous values to avoid redundant sending
-float prevTemp = -1.0;
-float prevHumidity = -1.0;
-
 
 // For ultrasound sensor
 int distanceThreshold = 0;
@@ -52,6 +36,10 @@ int sensorLDR = A0;
 // For Gas sensor
 int const PINO_SGAS = A1;
 int gasValue;
+
+// For TMP36 (Temperature Sensor)
+int temperaturePin = A0; // TMP36 connected to A0
+float temperature = 0.0;
 
 // Previous sensor values (optional, if you want to send only on change)
 int prevCM = -1;
@@ -107,21 +95,19 @@ bool waitForResponse(String target, unsigned long timeout) {
   return false;
 }
 
-void sendDataToThingSpeak(int distanceCM, int lightLevel, int gasVal, int motion) {
+void sendDataToThingSpeak(int distanceCM, int lightLevel, int gasVal, int motion, float temp) {
   // Construct the full HTTP request with multiple fields
   // field1 = Distance (cm)
   // field2 = Light Level (LDR)
   // field3 = Gas Sensor Value
   // field4 = Motion (PIR)
   // field5 = Temperature (°C)
-  // field6 = Humidity (%)
   String url = baseUrl 
                + "&field1=" + String(distanceCM)
                + "&field2=" + String(lightLevel)
                + "&field3=" + String(gasVal)
                + "&field4=" + String(motion)
-               + "&field5=" + String(temperature)
-               + "&field6=" + String(humidity);
+               + "&field5=" + String(temp);
 
   // Construct the HTTP GET request packet
   String httpPacket = "GET " + url + " HTTP/1.1\r\nHost: " + host + "\r\n\r\n";
@@ -144,7 +130,6 @@ void sendDataToThingSpeak(int distanceCM, int lightLevel, int gasVal, int motion
     Serial.println("Failed to send data");
   }
 }
-
 
 void setup() {
   // Setup LCD
@@ -177,6 +162,11 @@ void loop() {
   
   // Read Gas sensor value
   gasValue = analogRead(PINO_SGAS);
+
+  // Read temperature from TMP36 sensor
+  int sensorValue = analogRead(temperaturePin);
+  float voltage = sensorValue * (5.0 / 1023.0);  // Convert to voltage (0-5V)
+  temperature = (voltage - 0.5) * 100.0;  // Convert voltage to temperature in Celsius
 
   // Print distance to LCD
   lcd.setCursor(0,0); 
@@ -218,30 +208,14 @@ void loop() {
     lcd.print("G:----");
   }
 
-  // Read temperature and humidity
-  temperature = dht.readTemperature();
-  humidity = dht.readHumidity();
+  // Display Temperature on LCD
+  lcd.setCursor(8,1);
+  lcd.print("T:");
+  lcd.print(temperature);
+  lcd.print("C ");
 
-  // Check if readings are valid
-  if (isnan(temperature) || isnan(humidity)) {
-    lcd.setCursor(0, 1);
-    lcd.print("DHT Error  ");
-  } else {
-    // Display temperature and humidity on the LCD
-    lcd.setCursor(8, 1);
-    lcd.print("T:");
-    lcd.print(temperature);
-    lcd.print("C ");
-
-    lcd.setCursor(0, 1);
-    lcd.print("H:");
-    lcd.print(humidity);
-    lcd.print("% ");
-  }
-
-
-  // Send data to ThingSpeak (Distance, Light, Gas, PIR)
-  sendDataToThingSpeak(cm, ldrValue, gasValue, pirMotion);
+  // Send data to ThingSpeak (Distance, Light, Gas, PIR, Temperature)
+  sendDataToThingSpeak(cm, ldrValue, gasValue, pirMotion, temperature);
 
   delay(5000); // Wait a bit before next update
 }
