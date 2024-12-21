@@ -1,5 +1,6 @@
 // include the library code:
 #include <LiquidCrystal.h>
+#include <DHT.h>
 
 // Wi-Fi credentials
 String ssid     = "Simulator Wifi";  // SSID to connect to
@@ -20,6 +21,21 @@ String baseUrl  = "/update?api_key=" + apiKey;
 
 // initialize the library with the numbers of the interface pins
 LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+
+// Pin where the DHT sensor is connected
+#define DHTPIN A2
+
+// DHT11 sensor type
+#define DHTTYPE DHT11
+
+DHT dht(DHTPIN, DHTTYPE);
+float temperature = 0.0;
+float humidity = 0.0;
+
+// Previous values to avoid redundant sending
+float prevTemp = -1.0;
+float prevHumidity = -1.0;
+
 
 // For ultrasound sensor
 int distanceThreshold = 0;
@@ -97,11 +113,15 @@ void sendDataToThingSpeak(int distanceCM, int lightLevel, int gasVal, int motion
   // field2 = Light Level (LDR)
   // field3 = Gas Sensor Value
   // field4 = Motion (PIR)
+  // field5 = Temperature (°C)
+  // field6 = Humidity (%)
   String url = baseUrl 
                + "&field1=" + String(distanceCM)
                + "&field2=" + String(lightLevel)
                + "&field3=" + String(gasVal)
-               + "&field4=" + String(motion);
+               + "&field4=" + String(motion)
+               + "&field5=" + String(temperature)
+               + "&field6=" + String(humidity);
 
   // Construct the HTTP GET request packet
   String httpPacket = "GET " + url + " HTTP/1.1\r\nHost: " + host + "\r\n\r\n";
@@ -124,6 +144,7 @@ void sendDataToThingSpeak(int distanceCM, int lightLevel, int gasVal, int motion
     Serial.println("Failed to send data");
   }
 }
+
 
 void setup() {
   // Setup LCD
@@ -196,6 +217,28 @@ void loop() {
   } else {
     lcd.print("G:----");
   }
+
+  // Read temperature and humidity
+  temperature = dht.readTemperature();
+  humidity = dht.readHumidity();
+
+  // Check if readings are valid
+  if (isnan(temperature) || isnan(humidity)) {
+    lcd.setCursor(0, 1);
+    lcd.print("DHT Error  ");
+  } else {
+    // Display temperature and humidity on the LCD
+    lcd.setCursor(8, 1);
+    lcd.print("T:");
+    lcd.print(temperature);
+    lcd.print("C ");
+
+    lcd.setCursor(0, 1);
+    lcd.print("H:");
+    lcd.print(humidity);
+    lcd.print("% ");
+  }
+
 
   // Send data to ThingSpeak (Distance, Light, Gas, PIR)
   sendDataToThingSpeak(cm, ldrValue, gasValue, pirMotion);
