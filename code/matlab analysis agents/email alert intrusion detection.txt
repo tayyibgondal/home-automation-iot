@@ -1,0 +1,69 @@
+%--------------------------------------------------------------------------
+% Distance Sensor Entry Alert using ThingSpeak Alerts API
+%--------------------------------------------------------------------------
+%
+% This script monitors a distance sensor connected to ThingSpeak.
+% When the distance reading indicates that someone has entered the house,
+% it sends an email alert via the ThingSpeak Alerts API.
+%
+% Replace the placeholders with your actual ThingSpeak channel ID and Alerts API key.
+% Adjust the distance threshold as per your sensor's specifications.
+
+%--------------------------------------------------------------------------
+% Configuration
+%--------------------------------------------------------------------------
+
+% Store the channel ID for the distance sensor channel.
+channelID = 2788564;  % Replace with your actual ThingSpeak channel ID
+
+% Provide the ThingSpeak Alerts API key (all alerts API keys start with "TAK").
+alertApiKey = 'TAKISqogzM7MmKs51d/';  % Replace with your actual ThingSpeak Alerts API key
+
+% Set the address for the HTTP call (ThingSpeak Alerts API).
+alertUrl = "https://api.thingspeak.com/alerts/send";
+
+% Configure web options for the alert, including the API key in headers.
+options = weboptions('HeaderFields', {'ThingSpeak-Alerts-API-Key', alertApiKey});
+
+% Set the email subject for the alert.
+alertSubject = "Distance Sensor Alert: Entry Detected";
+
+%--------------------------------------------------------------------------
+% 1. Read distance sensor data from ThingSpeak
+%    (Field 1 is assumed to store the distance sensor values)
+%--------------------------------------------------------------------------
+try
+    % Fetch data from the last 30 days. Adjust 'NumDays' as needed.
+    distanceData = thingSpeakRead(channelID, 'NumDays', 30, 'Fields', 1, 'ReadKey', 'YOUR_READ_API_KEY');
+catch readException
+    fprintf("Failed to read data from ThingSpeak: %s\n", readException.message);
+    distanceData = [];
+end
+
+%--------------------------------------------------------------------------
+% 2. Check if data is retrieved successfully
+%--------------------------------------------------------------------------
+if isempty(distanceData)
+    alertBody = 'No data available from the distance sensor.';
+else
+    %--------------------------------------------------------------------------
+    % 3. Compare the most recent distance value against the threshold
+    %--------------------------------------------------------------------------
+    threshold = 50;  % Example threshold in centimeters. Adjust based on your sensor.
+    
+    % Get the latest distance reading
+    lastDistanceValue = distanceData(end);
+    
+    alertBody = sprintf('ENTRY DETECTED: Distance sensor reading is %.2f cm, which is below the threshold of %d cm.', ...
+            lastDistanceValue, threshold);
+
+end
+
+%--------------------------------------------------------------------------
+% 4. Send the alert message via ThingSpeak Alerts API
+%--------------------------------------------------------------------------
+try
+    webwrite(alertUrl, "body", alertBody, "subject", alertSubject, options);
+catch sendException
+    fprintf("Failed to send alert: %s\n", sendException.message);
+end

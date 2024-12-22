@@ -1,0 +1,66 @@
+% Enter your MATLAB Code below
+
+% MATLAB Script to Monitor PIR Sensor from ThingSpeak and Control Bulb via Arduino
+
+% Clear Workspace
+clear; clc; close all;
+
+% Configuration Parameters
+channelID = YOUR_CHANNEL_ID;          % Replace with your ThingSpeak Channel ID
+readAPIKey = 'YOUR_READ_API_KEY';     % Replace with your ThingSpeak Read API Key
+
+% Arduino Configuration
+serialPort = 'COM3';                  % Replace with your Arduino's COM port
+baudRate = 9600;                      % Must match Arduino's baud rate
+
+% Establish Serial Connection to Arduino
+try
+    arduinoObj = serial(serialPort, 'BaudRate', baudRate);
+    fopen(arduinoObj);
+    disp('Serial connection to Arduino established.');
+catch
+    error('Failed to connect to Arduino on %s', serialPort);
+end
+
+% Initialize Previous State
+previousState = 0;
+
+% Loop Parameters
+maxIterations = 1000;  % Number of iterations to run
+pauseDuration = 15;    % Time between iterations in seconds
+
+for i = 1:maxIterations
+    % Read Data from ThingSpeak
+    try
+        data = thingSpeakRead(channelID, 'Fields', 1, 'ReadKey', readAPIKey, 'NumPoints', 1);
+        currentState = data(1);
+        fprintf('Current PIR State: %d\n', currentState);
+    catch ME
+        warning('Failed to read from ThingSpeak: %s', ME.message);
+        currentState = previousState; % Retain previous state on failure
+    end
+    
+    % Check for State Change
+    if currentState ~= previousState
+        if currentState == 1
+            % Motion Detected - Turn On Bulb
+            fprintf('Motion Detected. Turning ON the bulb.\n');
+            fprintf(arduinoObj, 'ON\n');  % Send command to Arduino
+        else
+            % No Motion - Turn Off Bulb
+            fprintf('No Motion. Turning OFF the bulb.\n');
+            fprintf(arduinoObj, 'OFF\n'); % Send command to Arduino
+        end
+        % Update Previous State
+        previousState = currentState;
+    end
+    
+    % Pause before next iteration
+    pause(pauseDuration);
+end
+
+% Close Serial Connection
+fclose(arduinoObj);
+delete(arduinoObj);
+clear arduinoObj;
+disp('Serial connection to Arduino closed.');

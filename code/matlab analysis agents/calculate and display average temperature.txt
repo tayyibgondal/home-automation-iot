@@ -1,0 +1,58 @@
+%--------------------------------------------------------------------------
+% Read the last hour of temperature data from a ThingSpeak channel and
+% write the average temperature to Field 6 in another (or the same) channel.
+%--------------------------------------------------------------------------
+
+%=== 1. Specify the channel and field for reading
+readChannelID = 2788564;   % Channel ID to read data from
+tempFieldID   = 5;         % Field storing temperature data
+
+% If your read channel is private, enter its Read API Key here
+% (If the channel is public, you can leave this empty)
+readAPIKey    = '7TWNECS2YKLTSL4Y';  
+
+%=== 2. Read the past 60 minutes of temperature data from Field 5
+tempData = thingSpeakRead(readChannelID, ...
+    'Fields',    tempFieldID, ...
+    'NumMinutes',60, ...
+    'ReadKey',   readAPIKey);
+
+if isempty(tempData)
+    disp('No temperature data retrieved.');
+    % You can decide what to do here. For example:
+    % return;  % Exit if no data was found
+    % or set a default value for avgTemp:
+    avgTemp = 0; 
+    disp('Setting average temperature to 0 because no data was found.');
+else
+    %=== 3. Calculate the average temperature
+    avgTemp = mean(tempData);
+    
+    % Check if the average is NaN (e.g., if the data was all NaN)
+    if isnan(avgTemp)
+        % If it's NaN, choose a fallback value
+        avgTemp = 25;
+        disp('Mean is NaN. Setting average temperature to 0.');
+    else
+        disp(['Average Temperature = ', num2str(avgTemp), '°C']);
+    end
+end
+
+%--------------------------------------------------------------------------
+% 4. Write the average temperature to a *different* channel OR the same one
+%    in Field 6.
+%--------------------------------------------------------------------------
+% Replace with the channel ID where you want to write the average temperature
+% (It could be the same as readChannelID or a different channel.)
+writeChannelID = 2788564; 
+
+% Enter your Write API Key for the channel above
+writeAPIKey = 'YS1VTTDPFVKTT0G0';
+
+% Write the average temperature to Field 6
+thingSpeakWrite(writeChannelID, ...
+                'Fields',   6, ...
+                'Values',   avgTemp, ...
+                'WriteKey', writeAPIKey);
+
+disp('Successfully wrote average temperature to Field 6.');

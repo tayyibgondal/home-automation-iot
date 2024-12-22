@@ -1,0 +1,45 @@
+% Store the channel ID for the temperature sensor channel.
+channelID = 2788564;  % Replace with your actual temperature channel ID
+
+% Provide the ThingSpeak alerts API key. All alerts API keys start with TAK.
+alertApiKey = 'TAKISqogzM7MmKs51d/';  % Replace with your actual ThingSpeak API key
+
+% Set the address for the HTTP call (ThingSpeak Alerts API)
+alertUrl = "https://api.thingspeak.com/alerts/send";
+
+% Corrected web options using single quotes
+options = weboptions('HeaderFields', {'ThingSpeak-Alerts-API-Key', alertApiKey});
+
+% Set the email subject.
+alertSubject = sprintf("Temperature Alert: Check the conditions!");
+
+% Read the recent temperature data (you can set the number of past days as needed)
+temperatureData = thingSpeakRead(channelID, 'NumDays', 30, 'Fields', 1);
+
+% Check if the data was read correctly.
+if isempty(temperatureData)
+    alertBody = 'No data available from the temperature sensor.';
+else
+    % Calculate the threshold for the temperature (e.g., lower and upper limits)
+    lowerThreshold = 10;  % Example: 10°C, below which you'll send a warning
+    upperThreshold = 30;  % Example: 30°C, above which you'll send a warning
+
+    % Get the most recent temperature reading
+    lastTemperature = temperatureData(end);
+
+    % Set the outgoing message based on the temperature reading
+    if lastTemperature <= lowerThreshold
+        alertBody = sprintf('Warning: The temperature has dropped to %.2f°C. It''s cold! Please check the environment.', lastTemperature);
+    elseif lastTemperature >= upperThreshold
+        alertBody = sprintf('Warning: The temperature has reached %.2f°C. It''s hot! Please check the environment.', lastTemperature);
+    else
+        alertBody = sprintf('The temperature is %.2f°C, which is within the normal range.', lastTemperature);
+    end
+end
+
+% Send the alert via the ThingSpeak API.
+try
+    webwrite(alertUrl, "body", alertBody, "subject", alertSubject, options);
+catch someException
+    fprintf("Failed to send alert: %s\n", someException.message);
+end

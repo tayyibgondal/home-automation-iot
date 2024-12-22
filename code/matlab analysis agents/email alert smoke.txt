@@ -1,0 +1,58 @@
+%--------------------------------------------------------------------------
+% Gas Sensor Smoke Alert using ThingSpeak Alerts API
+%--------------------------------------------------------------------------
+
+% Store the channel ID for the gas sensor channel.
+% (If the gas sensor shares the same channel as before, keep the same ID.)
+channelID = 2788564;  % Replace with your actual channel ID
+
+% Provide the ThingSpeak Alerts API key (all alerts API keys start with "TAK").
+alertApiKey = 'TAKISqogzM7MmKs51d/';  % Replace with your actual ThingSpeak Alerts API key
+
+% Set the address for the HTTP call (ThingSpeak Alerts API).
+alertUrl = "https://api.thingspeak.com/alerts/send";
+
+% Configure web options for the alert.
+options = weboptions('HeaderFields', {'ThingSpeak-Alerts-API-Key', alertApiKey});
+
+% Set the email subject for the alert.
+alertSubject = sprintf("Gas Sensor Alert: Possible Smoke Detected");
+
+%--------------------------------------------------------------------------
+% 1. Read gas sensor data from ThingSpeak
+%    (Field 3 is assumed to store the gas sensor values)
+%--------------------------------------------------------------------------
+gasData = thingSpeakRead(channelID, 'NumDays', 30, 'Fields', 3);
+
+%--------------------------------------------------------------------------
+% 2. Check if data is retrieved successfully
+%--------------------------------------------------------------------------
+if isempty(gasData)
+    alertBody = 'No data available from the gas sensor.';
+else
+    %--------------------------------------------------------------------------
+    % 3. Compare the most recent gas value against the threshold
+    %--------------------------------------------------------------------------
+    threshold = 200;  % Example: if the value exceeds 200, consider it a smoke alert
+    
+    % Get the latest gas reading
+    lastGasValue = gasData(end);
+    
+    % Determine alert message
+    if lastGasValue > threshold
+        alertBody = sprintf('SMOKE ALERT: Gas sensor reading is %.2f, which exceeds %d. Please check immediately!', ...
+            lastGasValue, threshold);
+    else
+        alertBody = sprintf('Gas sensor reading is %.2f, which is within normal limits.', lastGasValue);
+    end
+end
+
+%--------------------------------------------------------------------------
+% 4. Send the alert message via ThingSpeak Alerts API
+%--------------------------------------------------------------------------
+try
+    webwrite(alertUrl, "body", alertBody, "subject", alertSubject, options);
+    fprintf("Alert sent successfully.\n");
+catch someException
+    fprintf("Failed to send alert: %s\n", someException.message);
+end
