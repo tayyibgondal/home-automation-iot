@@ -1,0 +1,32 @@
+% Read distance data for the last 10 hours from a ThingSpeak channel and 
+% visualize distance variations using the MATLAB HISTOGRAM function.
+
+% Channel ID to read data from 
+readChannelID = 12397; 
+
+% Distance Field ID 
+% Replace this with the actual field number that contains distance data.
+% For example, if distance is in field 2, set DistanceFieldID = 2;
+DistanceFieldID = 1; 
+
+% Channel Read API Key   
+% If your channel is private, enter the read API 
+% Key between the '' below:   
+readAPIKey = '7TWNECS2YKLTSL4Y'; 
+
+% Get distance data from the specified field for the last 10 hours 
+% (10 hours * 60 minutes/hour = 600 minutes).
+% Ensure that 'NumMinutes' aligns with your data sampling rate.
+distanceData = thingSpeakRead(readChannelID, ...
+    'Fields', DistanceFieldID, ...
+    'NumMinutes', 10*60, ...
+    'ReadKey', readAPIKey); 
+
+% Create a histogram of the distance data
+histogram(distanceData);
+xlabel('Distance (units)');  % Replace 'units' with the actual unit of distance (e.g., cm, meters)
+ylabel('Number of Measurements per Distance');
+title('Histogram of Distance Variation');
+
+% (Optional) Enhance the histogram with grid lines and better aesthetics
+grid on;

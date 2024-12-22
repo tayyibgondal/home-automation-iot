@@ -1,0 +1,29 @@
+% Read temperature and smoke detection from a ThingSpeak channel and visualize the 
+% relationship between them using the SCATTER plot 
+
+% Channel ID to read data from 
+readChannelID = 12397; 
+% Temperature Field ID 
+TemperatureFieldID = 3; 
+% Humidity Field ID 
+smokeFieldID = 5; 
+
+% Channel Read API Key   
+% If your channel is private, then enter the read API 
+% Key between the '' below:   
+readAPIKey = ''; 
+
+
+data = thingSpeakRead(readChannelID,'Fields',[TemperatureFieldID smokeFieldID], ...
+                                               'NumPoints',300, ...
+                                               'ReadKey',readAPIKey); 
+
+temperatureData = data(:,1);
+
+% Read Humidity Data 
+smokeData = data(:,2);
+
+% Visualize the data
+scatter(temperatureData,smokeData);
+xlabel('Temperature');
+ylabel('Smoke'); 
