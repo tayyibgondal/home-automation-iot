@@ -1,0 +1,13 @@
+readChannelID = 12397; 
+   
+fieldID = 4; 
+    
+readAPIKey = ''; 
+
+fieldData = thingSpeakRead(readChannelID,'Fields',fieldID,...
+'NumMinutes',10*60, 'ReadKey',readAPIKey); 
+   
+histogram(fieldData); 
+xlabel('Motion sensor status'); 
+ylabel('Number of Measurements'); 
+title('Histogram of Motion sensor status Variation');

@@ -1,0 +1,13 @@
+readChannelID = 12397; 
+   
+fieldID = 2; 
+    
+readAPIKey = ''; 
+
+fieldData = thingSpeakRead(readChannelID,'Fields',fieldID,...
+'NumMinutes',10*60, 'ReadKey',readAPIKey); 
+   
+histogram(fieldData); 
+xlabel('Bulb status (F)'); 
+ylabel('Number of Measurements\newline for Each Bulb status'); 
+title('Histogram of Bulb status Variation');

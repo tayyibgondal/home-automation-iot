@@ -1,0 +1,13 @@
+readChannelID = 12397; 
+   
+fieldID = 3; 
+    
+readAPIKey = ''; 
+
+fieldData = thingSpeakRead(readChannelID,'Fields',fieldID,...
+'NumMinutes',10*60, 'ReadKey',readAPIKey); 
+   
+histogram(fieldData); 
+xlabel('Smoke sensor status'); 
+ylabel('Number of Measurements'); 
+title('Histogram of Smoke sensor status Variation');

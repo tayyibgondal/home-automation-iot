@@ -1,0 +1,26 @@
+% Read bulb status and pir from a ThingSpeak channel and visualize the 
+% relationship between them using the SCATTER plot 
+
+% Channel ID to read data from 
+readChannelID = 12397; 
+
+bulbFieldID = 2; 
+pirFieldID = 4; 
+
+% Channel Read API Key   
+% If your channel is private, then enter the read API 
+% Key between the '' below:   
+readAPIKey = ''; 
+
+
+data = thingSpeakRead(readChannelID,'Fields',[bulbFieldID pirFieldID], ...
+                                               'NumPoints',300, ...
+                                               'ReadKey',readAPIKey); 
+
+bulbData = data(:,1);
+pirData = data(:,2);
+
+% Visualize the data
+scatter(bulbData, pirData);
+xlabel('Bulb status');
+ylabel('Motion status detectorss'); 

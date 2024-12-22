@@ -1,0 +1,29 @@
+readChannelID = 12397; 
+
+myFieldID = 3; 
+
+% One day date range
+oneDay = [datetime('yesterday') datetime('today')];
+
+% Channel Read API Key 
+% If your channel is private, then enter the read API key between the '' below: 
+readAPIKey = ''; 
+
+smokeDay1 = thingSpeakRead(readChannelID,'Fields',myFieldID, ...
+                                 'dateRange', oneDay, 'ReadKey',readAPIKey); 
+smokeDay2 = thingSpeakRead(readChannelID,'Fields',myFieldID, ...
+                                 'dateRange',oneDay-days(1),'ReadKey',readAPIKey); 
+smokeDay3 = thingSpeakRead(readChannelID,'Fields',myFieldID, ...
+                                'dateRange', oneDay-days(2),'ReadKey',readAPIKey); 
+
+% Create array of durations 
+myTimes1 = minutes(1:length(smokeDay1));
+myTimes2 = minutes(1:length(smokeDay2));
+myTimes3 = minutes(1:length(smokeDay3));
+
+% Visualize the data
+plot(myTimes1,smokeDay1, myTimes2,smokeDay2, myTimes3, smokeDay3);
+legend({'Day1','Day2','Day3'});
+xlabel('Minutes');
+ylabel('Smoke status');
+title('3-Day Smoke Status Comparison');
