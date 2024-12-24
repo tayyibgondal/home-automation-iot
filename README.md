@@ -36,6 +36,8 @@ To enhance the responsiveness of the IoT-based home automation system, email ale
 - **Use Case**: Ensures prompt action in case of fire or gas leaks, enhancing safety.
 
 These alerts provide critical, real-time information to users, enabling immediate action to mitigate risks and optimize home automation systems.
+
+
 <img width="176" alt="image" src="https://github.com/user-attachments/assets/7364bc54-057b-4ce4-93a5-5e2292e7d146" />
 <img width="176" alt="image" src="https://github.com/user-attachments/assets/732e5ad4-0b52-4601-935d-ac5af5d72eb9" />
 <img width="195" alt="image" src="https://github.com/user-attachments/assets/a2b0e3a2-0d60-47b6-8501-ddfcbd5e1179" />
